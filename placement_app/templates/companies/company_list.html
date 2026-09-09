@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Company Database - Placement Cell{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">COMPANY DATABASE</h4>
+        <p class="text-muted mb-0">Manage recruiting companies, HR contact details, eligibility criteria, and salary packages.</p>
+    </div>
+    <a href="{% url 'company_create' %}" class="btn btn-primary shadow-sm fw-bold">
+        <i class="fa-solid fa-building-circle-check me-2"></i> Add Company
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Company ID</th>
+                        <th>Company Name</th>
+                        <th>Industry & Location</th>
+                        <th>Job Role</th>
+                        <th>Salary / CTC</th>
+                        <th>Eligible Depts</th>
+                        <th>Min % / Max Arrears</th>
+                        <th>HR Contact</th>
+                        <th class="pe-4 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comp in companies %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-muted">{{ comp.company_id }}</td>
+                        <td class="fw-bold text-dark fs-6">
+                            <i class="fa-solid fa-building text-primary me-2"></i>{{ comp.name }}
+                        </td>
+                        <td>
+                            <span class="d-block fw-semibold">{{ comp.industry }}</span>
+                            <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>{{ comp.job_location }}</small>
+                        </td>
+                        <td class="fw-semibold">{{ comp.job_role }}</td>
+                        <td class="fw-bold text-success">{{ comp.salary_ctc }}</td>
+                        <td>
+                            {% for d in comp.eligible_departments.all %}
+                                <span class="badge bg-primary-subtle text-primary border" style="font-size: 0.75rem;">{{ d.code }}</span>
+                            {% empty %}
+                                <span class="badge bg-light text-dark">All</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <small class="d-block">Min: <strong>{{ comp.min_percentage }}%</strong></small>
+                            <small class="text-muted">Max Arrears: <strong>{{ comp.max_arrears }}</strong></small>
+                        </td>
+                        <td>
+                            <small class="d-block fw-semibold">{{ comp.hr_name }}</small>
+                            <small class="text-muted"><i class="fa-solid fa-phone me-1"></i>{{ comp.hr_contact }}</small>
+                        </td>
+                        <td class="pe-4 text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'drive_create' %}?company={{ comp.pk }}" class="btn btn-outline-primary fw-semibold" title="Create Placement Drive">
+                                    <i class="fa-solid fa-calendar-plus me-1"></i> Create Drive
+                                </a>
+                                <a href="{% url 'company_edit' comp.pk %}" class="btn btn-outline-warning text-dark fw-semibold" title="Edit Company Details">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                                </a>
+                                <a href="{% url 'company_delete' comp.pk %}" onclick="return confirm('Are you sure you want to delete company {{ comp.name }}?');" class="btn btn-outline-danger fw-semibold" title="Delete Company">
+                                    <i class="fa-solid fa-trash me-1"></i> Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-building-circle-xmark fs-2 d-block mb-2"></i>
+                            No companies added yet. Click "Add Company" to add Hyundai, BYD, Tata Electronics, Foxconn, etc.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

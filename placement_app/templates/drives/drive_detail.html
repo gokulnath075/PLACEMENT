@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+
+{% block title %}Drive Tracker - {{ drive.company.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <a href="{% url 'drive_list' %}" class="text-decoration-none text-muted fw-semibold">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Placement Drives
+    </a>
+    <div>
+        <a href="{% url 'drive_edit' drive.pk %}" class="btn btn-sm btn-outline-warning text-dark fw-bold me-1">
+            <i class="fa-solid fa-pen-to-square me-1"></i> Edit Drive
+        </a>
+        <a href="{% url 'drive_delete' drive.pk %}" onclick="return confirm('Are you sure you want to delete drive {{ drive.title }}?');" class="btn btn-sm btn-outline-danger fw-bold">
+            <i class="fa-solid fa-trash me-1"></i> Delete Drive
+        </a>
+    </div>
+</div>
+
+<!-- Drive Summary Banner -->
+<div class="card border-0 shadow-sm rounded-3 mb-4 bg-white overflow-hidden">
+    <div class="p-4 border-start border-primary border-5">
+        <div class="row align-items-center">
+            <div class="col-md">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-primary px-3 py-1">{{ drive.title }}</span>
+                    {% if drive.status == 'COMPLETED' %}
+                        <span class="badge bg-secondary px-3 py-1"><i class="fa-solid fa-circle-check me-1"></i> Drive Completed</span>
+                    {% elif drive.status == 'ONGOING' %}
+                        <span class="badge bg-success px-3 py-1"><i class="fa-solid fa-play me-1"></i> Drive Ongoing</span>
+                    {% else %}
+                        <span class="badge bg-info px-3 py-1">Upcoming</span>
+                    {% endif %}
+                </div>
+                <h3 class="fw-bold text-dark mb-1">{{ drive.company.name }} Campus Drive</h3>
+                <div class="d-flex flex-wrap gap-3 text-muted">
+                    <span><i class="fa-solid fa-indian-rupee-sign text-success me-1"></i> Salary: <strong class="text-success">{{ drive.salary_ctc }}</strong></span>
+                    <span><i class="fa-solid fa-user-tag me-1"></i> Role: <strong>{{ drive.job_role }}</strong></span>
+                    <span><i class="fa-solid fa-calendar me-1"></i> Drive Date: <strong>{{ drive.drive_date|date:"d-m-Y" }}</strong></span>
+                    <span><i class="fa-solid fa-location-dot me-1"></i> Location: <strong>{{ drive.company.job_location }}</strong></span>
+                </div>
+            </div>
+            <div class="col-md-auto text-end mt-3 mt-md-0 d-flex flex-wrap gap-2 justify-content-md-end">
+                <!-- Select Students from Database Button -->
+                <button type="button" class="btn btn-primary shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#selectStudentsModal">
+                    <i class="fa-solid fa-user-plus me-1"></i> Select Students from Database
+                </button>
+
+                <!-- Complete / Reopen Drive Button -->
+                {% if drive.status == 'COMPLETED' %}
+                    <a href="{% url 'drive_complete' drive.pk %}" class="btn btn-outline-secondary shadow-sm fw-bold">
+                        <i class="fa-solid fa-rotate-left me-1"></i> Reopen Drive
+                    </a>
+                {% else %}
+                    <a href="{% url 'drive_complete' drive.pk %}" class="btn btn-success shadow-sm text-white fw-bold">
+                        <i class="fa-solid fa-circle-check me-1"></i> Complete Drive
+                    </a>
+                {% endif %}
+
+                <!-- Export Reports -->
+                <a href="{% url 'selection_report' %}?company={{ drive.company.pk }}&export=pdf" class="btn btn-danger shadow-sm fw-bold" title="Download Selection PDF">
+                    <i class="fa-solid fa-file-pdf me-1"></i> PDF
+                </a>
+                <a href="{% url 'selection_report' %}?company={{ drive.company.pk }}" class="btn btn-warning shadow-sm text-dark fw-bold">
+                    <i class="fa-solid fa-award me-1"></i> Selection View
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Select Students from Database -->
+<div class="modal fade" id="selectStudentsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="post" action="{% url 'drive_add_students' drive.pk %}">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white py-3">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fa-solid fa-users-rectangle me-2"></i>Select Students from Master Database
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body p-3">
+                    <p class="small text-muted mb-3">
+                        Choose students from the database to register for <strong>{{ drive.company.name }}</strong> drive. Students already registered will be marked.
+                    </p>
+
+                    <!-- Search Input -->
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fa-solid fa-search text-muted"></i></span>
+                            <input type="text" id="dbStudentSearchInput" class="form-control" placeholder="Search by Register Number, Name, or Department (e.g. 24213946, DME)...">
+                        </div>
+                    </div>
+
+                    <!-- Students Selection Table -->
+                    <div class="table-responsive" style="max-height: 380px;">
+                        <table class="table table-hover align-middle mb-0" id="dbStudentsTable">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 40px;">
+                                        <input class="form-check-input" type="checkbox" id="selectAllDbStudents">
+                                    </th>
+                                    <th>Register Number</th>
+                                    <th>Student Name</th>
+                                    <th>Department</th>
+                                    <th class="text-center">Avg %</th>
+                                    <th class="text-center">Arrears</th>
+                                    <th class="text-end pe-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in all_students %}
+                                <tr>
+                                    <td>
+                                        <input class="form-check-input db-student-cb" type="checkbox" name="selected_students" value="{{ s.pk }}" {% if s.pk in registered_student_ids %}checked disabled{% endif %}>
+                                    </td>
+                                    <td class="fw-bold font-monospace">{{ s.register_number }}</td>
+                                    <td class="fw-semibold text-dark">{{ s.name }}</td>
+                                    <td><span class="badge bg-primary-subtle text-primary border">{{ s.department.code }}</span></td>
+                                    <td class="text-center fw-bold text-success">{{ s.avg_sem_perc }}%</td>
+                                    <td class="text-center">
+                                        {% if s.no_of_arrears == 0 %}
+                                            <span class="badge bg-success-subtle text-success">0</span>
+                                        {% else %}
+                                            <span class="badge bg-danger-subtle text-danger">{{ s.no_of_arrears }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        {% if s.pk in registered_student_ids %}
+                                            <span class="badge bg-success-subtle text-success border border-success"><i class="fa-solid fa-check me-1"></i> Registered</span>
+                                        {% else %}
+                                            <span class="badge bg-light text-muted border">Available</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">No students available in database.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-4">
+                        <i class="fa-solid fa-plus-circle me-1"></i> Add Selected Students to Drive
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Registered Students & Attendance / Selection Tracker -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0 text-primary">
+            <i class="fa-solid fa-list-check me-2"></i>Attendance & Selection Status Tracker (Total Registered: {{ records.count }})
+        </h6>
+        <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="btn btn-sm btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#selectStudentsModal">
+                <i class="fa-solid fa-user-plus me-1"></i> Select Students from Database
+            </button>
+            {% if drive.status != 'COMPLETED' %}
+                <a href="{% url 'drive_complete' drive.pk %}" class="btn btn-sm btn-success text-white fw-bold">
+                    <i class="fa-solid fa-circle-check me-1"></i> Complete Drive
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Reg Number</th>
+                        <th>Student Name</th>
+                        <th>Department</th>
+                        <th class="text-center">Attended</th>
+                        <th class="text-center">Final Result</th>
+                        <th class="pe-4 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in records %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-primary font-monospace">{{ rec.student.register_number }}</td>
+                        <td class="fw-semibold text-dark">{{ rec.student.name }}</td>
+                        <td><span class="badge bg-primary-subtle text-primary border">{{ rec.student.department.code }}</span></td>
+                        
+                        <td class="text-center">
+                            {% if rec.interview_attended %}
+                                <span class="badge bg-success-subtle text-success border border-success"><i class="fa-solid fa-check me-1"></i> Yes</span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary border">No</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-center">
+                            {% if rec.final_result == 'SELECTED' or rec.final_result == 'JOINED' %}
+                                <span class="badge bg-success fs-6 px-3 py-1"><i class="fa-solid fa-trophy me-1"></i> Selected</span>
+                            {% elif rec.final_result == 'REJECTED' %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger">Rejected</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning border border-warning">{{ rec.get_final_result_display }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="pe-4 text-end">
+                            <a href="{% url 'drive_remove_student' drive.pk rec.student.pk %}" onclick="return confirm('Remove student {{ rec.student.register_number }} from this drive?');" class="btn btn-outline-danger btn-sm fw-semibold" title="Remove from Drive">
+                                <i class="fa-solid fa-trash me-1"></i> Remove
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-user-group fs-2 d-block mb-2"></i>
+                            No students currently registered for this drive. Click <strong>"Select Students from Database"</strong> above to register students.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('dbStudentSearchInput');
+        const dbTable = document.getElementById('dbStudentsTable');
+        const rows = dbTable ? dbTable.querySelectorAll('tbody tr') : [];
+        const selectAllCb = document.getElementById('selectAllDbStudents');
+        const studentCbs = document.querySelectorAll('.db-student-cb:not([disabled])');
+
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const query = searchInput.value.toLowerCase().trim();
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+        }
+
+        if (selectAllCb) {
+            selectAllCb.addEventListener('change', function() {
+                studentCbs.forEach(cb => {
+                    if (cb.closest('tr').style.display !== 'none') {
+                        cb.checked = selectAllCb.checked;
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

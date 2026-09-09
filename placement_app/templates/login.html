@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}User Login - Placement Cell{% endblock %}
+
+{% block content %}
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-light">
+    <div class="row w-100 justify-content-center">
+        <div class="col-md-5 col-lg-4">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white text-center py-4" style="background: linear-gradient(135deg, #143452 0%, #1F4E79 100%) !important;">
+                    <div class="badge bg-danger mb-2 px-3 py-1 text-uppercase" style="font-size: 0.75rem;">T&P CELL PORTAL</div>
+                    <h5 class="fw-bold mb-0">SHREE VENKATESHWARA</h5>
+                    <small class="text-white-50">HI-TECH POLYTECHNIC COLLEGE</small>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Username / Officer ID</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-user text-muted"></i></span>
+                                <input type="text" name="username" class="form-control" placeholder="Enter username" required autofocus>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-lock text-muted"></i></span>
+                                <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2.5 rounded-3 fw-bold shadow-sm" style="background-color: #1F4E79;">
+                            <i class="fa-solid fa-right-to-bracket me-2"></i> Log In to Placement Cell
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer bg-light text-center py-3 border-0">
+                    <small class="text-muted">Training & Placement Cell Software &copy; 2026</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

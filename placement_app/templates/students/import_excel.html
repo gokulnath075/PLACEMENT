@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Excel Data - Placement Cell{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'student_list' %}" class="text-decoration-none text-muted fw-semibold">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Student Database
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-file-excel text-success me-2"></i>Bulk Import Student Database (.xlsx)</h5>
+            </div>
+            <div class="card-body p-4">
+                
+                <div class="alert alert-info border-0 shadow-sm mb-4">
+                    <h6 class="fw-bold"><i class="fa-solid fa-circle-info me-2"></i>Excel File Column Guidelines</h6>
+                    <p class="mb-2 small">Your Excel file should contain a header row with columns similar to:</p>
+                    <code class="d-block bg-white p-2 rounded text-dark mb-3 border" style="font-size: 0.82rem;">
+                        Register Number | Student Name | Department | Email | Student Mobile | Parent Mobile | DOB | Aadhar Number | Gender | Address | Batch | Passout Year | Arrears History | No. of Arrears | Sem 1 % | Sem 2 % | Sem 3 % | Sem 4 % | Sem 5 % | Sem 6 % | X % | XII % | ITI
+                    </code>
+                    <ul class="small mb-0">
+                        <li><strong>Register Number</strong> is used as the unique identifier for each student.</li>
+                        <li><strong>Student Photos:</strong> If photos are placed in the <code>media/student_photos/</code> directory named with the student's Register Number (e.g. <code>24213946.jpg</code>), they will be <strong>automatically linked</strong> to the profile!</li>
+                    </ul>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" action="{% url 'import_excel' %}">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold fs-6">Select Student Master Excel File (.xlsx)</label>
+                        <input type="file" name="excel_file" class="form-control form-control-lg" accept=".xlsx, .xls" required>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                        <span class="text-muted small"><i class="fa-solid fa-shield-halved me-1"></i> Existing student records will be safely updated based on Register Number.</span>
+                        <button type="submit" class="btn btn-success px-4 py-2 fw-bold">
+                            <i class="fa-solid fa-upload me-2"></i> Start Bulk Import
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

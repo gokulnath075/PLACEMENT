@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block title %}Selection Report - Placement Cell{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Format matching official selection sheet */
+    .selection-report-box {
+        background: #fff;
+        border: 2px solid #1F4E79;
+        padding: 35px 40px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    .report-college-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .report-college-header h3 {
+        font-family: 'Arial', sans-serif;
+        font-weight: 800;
+        color: #1F4E79;
+        font-size: 1.6rem;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+    }
+
+    .report-college-header h5 {
+        font-family: 'Arial', sans-serif;
+        font-weight: 700;
+        color: #D9534F;
+        font-size: 1.15rem;
+        letter-spacing: 1px;
+        margin-bottom: 0;
+        text-transform: uppercase;
+    }
+
+    .report-meta-table {
+        width: 100%;
+        margin-bottom: 25px;
+        border: 2px solid #334155;
+    }
+
+    .report-meta-table td {
+        padding: 10px 18px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: #0F172A;
+        background-color: #F8FAFC;
+    }
+
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    .report-table th {
+        background-color: #1F4E79 !important;
+        color: #ffffff !important;
+        font-weight: 700;
+        text-align: center;
+        vertical-align: middle;
+        padding: 12px 10px;
+        font-size: 0.95rem;
+        border: 1px solid #143452;
+        text-transform: uppercase;
+    }
+
+    .report-table td {
+        border: 1px solid #94A3B8;
+        padding: 8px 10px;
+        vertical-align: middle;
+        text-align: center;
+        font-weight: 600;
+        color: #1E293B;
+        font-size: 0.95rem;
+    }
+
+    .student-photo-cell img {
+        width: 60px;
+        height: 72px;
+        object-fit: cover;
+        border: 1px solid #CBD5E1;
+        border-radius: 3px;
+        padding: 2px;
+        background: #fff;
+    }
+
+    .no-photo-placeholder {
+        width: 60px;
+        height: 72px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #F1F5F9;
+        border: 1px dashed #94A3B8;
+        color: #64748B;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    @media print {
+        body {
+            background: #fff !important;
+        }
+        .selection-report-box {
+            border: none !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Control Panel (Hidden on Print) -->
+<div class="card border-0 shadow-sm rounded-3 mb-4 no-print">
+    <div class="card-body p-3">
+        <form method="get" action="{% url 'selection_report' %}" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label fw-bold small text-muted text-uppercase">1. Select Company / Drive</label>
+                <select name="company" class="form-select form-select-lg fw-bold text-primary" required>
+                    <option value="">-- Choose Company --</option>
+                    {% for comp in companies %}
+                        <option value="{{ comp.pk }}" {% if selected_company_id == comp.pk %}selected{% endif %}>
+                            {{ comp.name }} (Salary: {{ comp.salary_ctc }} | Date: {{ comp.drive_date|date:"d-m-Y" }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-muted text-uppercase">2. Filter Department</label>
+                <select name="department" class="form-select form-select-lg fw-bold">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.code }}" {% if selected_dept == dept.code %}selected{% endif %}>{{ dept.code }} - {{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-lg flex-grow-1 fw-bold">
+                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Generate Report
+                </button>
+                {% if selected_company %}
+                    <a href="?company={{ selected_company.pk }}&department={{ selected_dept }}&export=excel" class="btn btn-success btn-lg fw-bold" title="Download Excel Format">
+                        <i class="fa-solid fa-file-excel me-1"></i> Excel
+                    </a>
+                    <a href="?company={{ selected_company.pk }}&department={{ selected_dept }}&export=pdf" class="btn btn-danger btn-lg fw-bold" title="Download Official PDF">
+                        <i class="fa-solid fa-file-pdf me-1"></i> PDF
+                    </a>
+                    <button type="button" onclick="window.print()" class="btn btn-dark btn-lg fw-bold" title="Print Selection Sheet">
+                        <i class="fa-solid fa-print me-1"></i> Print
+                    </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if selected_company %}
+<!-- Official Selection Report Document Container -->
+<div class="selection-report-box rounded-2">
+    <!-- Header -->
+    <div class="report-college-header">
+        <h3>SHREE VENKATESHWARA HI-TECH POLYTECHNIC COLLEGE</h3>
+        <h5>TRAINING AND PLACEMENT CELL</h5>
+    </div>
+
+    <!-- Meta details bar -->
+    <table class="report-meta-table">
+        <tr>
+            <td style="width: 45%;">SALARY : <span class="text-danger">{{ selected_company.salary_ctc }}</span></td>
+            <td style="width: 55%;">NAME OF THE COMPANY : <span class="text-primary">{{ selected_company.name|upper }}</span></td>
+        </tr>
+    </table>
+
+    <!-- Selection Records Table -->
+    <table class="report-table">
+        <thead>
+            <tr>
+                <th style="width: 8%;">S.No</th>
+                <th style="width: 24%;">Register Number</th>
+                <th style="width: 38%;">Student Name</th>
+                <th style="width: 15%;">Department</th>
+                <th style="width: 15%;">Student Photo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rec in records %}
+            <tr>
+                <td style="font-weight: 700;">{{ forloop.counter }}</td>
+                <td style="font-family: monospace; font-size: 1.05rem; font-weight: 700;">{{ rec.student.register_number }}</td>
+                <td style="text-align: left; padding-left: 20px; font-weight: 700;">{{ rec.student.name|upper }}</td>
+                <td style="font-weight: 700;">{{ rec.student.department.code }}</td>
+                <td class="student-photo-cell">
+                    {% if rec.student.has_photo %}
+                        <img src="{{ rec.student.photo_url }}" alt="{{ rec.student.name }}">
+                    {% else %}
+                        <div class="no-photo-placeholder">PHOTO</div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="padding: 40px; color: #64748B;">
+                    <i class="fa-solid fa-circle-exclamation fs-3 mb-2 d-block"></i>
+                    No selected candidates recorded for {{ selected_company.name }} yet.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card border-0 shadow-sm py-5 text-center text-muted">
+    <div class="card-body">
+        <i class="fa-solid fa-award text-warning display-3 mb-3"></i>
+        <h5 class="fw-bold text-dark">Automatic Selection Report Generator</h5>
+        <p class="mb-0">Select a company from the dropdown above and click <strong>"Generate Report"</strong> to preview and print the official selection sheet.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal: Add Department -->
+<div class="modal fade no-print" id="addDeptReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'department_list' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="selection_report">
+                <div class="modal-header bg-primary text-white">
+                    <h6 class="modal-title fw-bold"><i class="fa-solid fa-folder-plus me-2"></i>Add Academic Department</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Department Code <span class="text-danger">*</span></label>
+                        <input type="text" name="code" class="form-control text-uppercase" placeholder="e.g. DME, EEE, ECE, CSE, CIVIL" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Full Department Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Diploma in Mechanical Engineering">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold">Add Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Remove Department -->
+<div class="modal fade no-print" id="removeDeptReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h6 class="modal-title fw-bold"><i class="fa-solid fa-folder-minus me-2"></i>Remove Department</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-start">
+                <p class="small text-muted mb-3">Select an empty department to remove from the system:</p>
+                <div class="list-group">
+                    {% for dept in departments %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-primary me-2">{{ dept.code }}</span>
+                                <strong class="text-dark">{{ dept.name }}</strong>
+                            </div>
+                            {% if dept.students.count > 0 %}
+                                <span class="badge bg-secondary" title="Has enrolled students">{{ dept.students.count }} Students</span>
+                            {% else %}
+                                <a href="{% url 'department_delete' dept.pk %}?next=selection_report" onclick="return confirm('Remove department {{ dept.code }}?');" class="btn btn-sm btn-danger fw-bold">
+                                    <i class="fa-solid fa-trash me-1"></i> Remove
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <div class="text-muted p-2">No departments available.</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between align-items-center">
+                <form method="post" action="{% url 'department_bulk_delete' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="clean_unused" value="true">
+                    <input type="hidden" name="next" value="selection_report">
+                    <button type="submit" onclick="return confirm('Remove all departments with 0 students in the Student Database?');" class="btn btn-outline-danger btn-sm fw-bold">
+                        <i class="fa-solid fa-broom me-1"></i> Remove All Unused (0 Students)
+                    </button>
+                </form>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

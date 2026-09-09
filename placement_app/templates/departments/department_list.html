@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Departments - Placement Cell{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">DEPARTMENT MANAGEMENT</h4>
+        <p class="text-muted mb-0">Manage college academic departments, add new departments, or delete unwanted department records.</p>
+    </div>
+    <button type="button" class="btn btn-primary shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#addDeptModal">
+        <i class="fa-solid fa-plus me-2"></i> Add New Department
+    </button>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDeptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'department_list' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="department_list">
+                <div class="modal-header bg-primary text-white">
+                    <h6 class="modal-title fw-bold"><i class="fa-solid fa-sitemap me-2"></i>Add Academic Department</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Department Code <span class="text-danger">*</span></label>
+                        <input type="text" name="code" class="form-control text-uppercase" placeholder="e.g. DME, EEE, ECE, CSE" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Full Department Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Diploma in Mechanical Engineering">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold">Save Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<form method="post" action="{% url 'department_bulk_delete' %}" id="bulkDeleteDeptForm">
+    {% csrf_token %}
+    
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-muted fw-semibold">Total Departments: <strong>{{ departments.count }}</strong></span>
+        <div class="d-flex gap-2 align-items-center">
+            <form method="post" action="{% url 'department_bulk_delete' %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="clean_unused" value="true">
+                <input type="hidden" name="next" value="department_list">
+                <button type="submit" onclick="return confirm('Remove all departments with 0 students in the Student Database?');" class="btn btn-outline-danger btn-sm fw-bold">
+                    <i class="fa-solid fa-broom me-1"></i> Clean All Unused (0 Students)
+                </button>
+            </form>
+            <button type="button" id="bulkDeleteDeptBtn" class="btn btn-danger btn-sm fw-bold disabled" data-bs-toggle="modal" data-bs-target="#bulkDeleteDeptModal">
+                <i class="fa-solid fa-trash-can me-1"></i> Delete Selected Unwanted (<span id="selectedDeptCount">0</span>)
+            </button>
+        </div>
+    </div>
+
+    <!-- Departments Table Card -->
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-muted small text-uppercase">
+                        <tr>
+                            <th class="ps-4" style="width: 40px;">
+                                <input class="form-check-input" type="checkbox" id="selectAllDepts" title="Select All">
+                            </th>
+                            <th>Code</th>
+                            <th>Department Name</th>
+                            <th class="text-center">Enrolled Students</th>
+                            <th class="pe-4 text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dept in departments %}
+                        <tr>
+                            <td class="ps-4">
+                                <input class="form-check-input dept-checkbox" type="checkbox" name="selected_departments" value="{{ dept.pk }}">
+                            </td>
+                            <td class="fw-bold">
+                                <span class="badge bg-primary fs-6 px-3 py-1">{{ dept.code }}</span>
+                            </td>
+                            <td class="fw-semibold text-dark">{{ dept.name }}</td>
+                            <td class="text-center">
+                                {% if dept.student_count > 0 %}
+                                    <span class="badge bg-success-subtle text-success border border-success">{{ dept.student_count }} Students</span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary">0 Students</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-4 text-end">
+                                 <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteDeptModal{{ dept.pk }}" title="Delete Department">
+                                    <i class="fa-solid fa-trash me-1"></i> Delete
+                                </button>
+
+                                <!-- Delete Department Modal -->
+                                <div class="modal fade text-start" id="deleteDeptModal{{ dept.pk }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h6 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Confirm Delete Department</h6>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="mb-1">Are you sure you want to delete department:</p>
+                                                <h5 class="fw-bold text-dark mb-2">{{ dept.code }} - {{ dept.name }}</h5>
+                                                {% if dept.student_count > 0 %}
+                                                    <div class="alert alert-warning mb-0 small">
+                                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Cannot delete: This department currently has {{ dept.student_count }} enrolled student(s).
+                                                    </div>
+                                                {% else %}
+                                                    <p class="small text-muted mb-0">This unwanted department record has 0 students and will be permanently deleted.</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="modal-footer bg-light">
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                {% if dept.student_count == 0 %}
+                                                    <a href="{% url 'department_delete' dept.pk %}" class="btn btn-danger btn-sm fw-bold">Delete Department</a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-folder-open fs-2 d-block mb-2"></i>
+                                No departments found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Delete Confirmation Modal -->
+    <div class="modal fade text-start" id="bulkDeleteDeptModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h6 class="modal-title fw-bold"><i class="fa-solid fa-trash-can me-2"></i>Confirm Bulk Delete Unwanted Departments</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Are you sure you want to delete the <strong id="modalSelectedDeptCount">0</strong> selected department record(s)?</p>
+                    <p class="small text-muted mb-0">Note: Departments with active enrolled students will be safely skipped.</p>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-bold">Delete Selected Departments</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const selectAllDepts = document.getElementById('selectAllDepts');
+        const deptCheckboxes = document.querySelectorAll('.dept-checkbox');
+        const bulkDeleteDeptBtn = document.getElementById('bulkDeleteDeptBtn');
+        const selectedDeptCount = document.getElementById('selectedDeptCount');
+        const modalSelectedDeptCount = document.getElementById('modalSelectedDeptCount');
+
+        function updateDeptSelection() {
+            const count = document.querySelectorAll('.dept-checkbox:checked').length;
+            selectedDeptCount.textContent = count;
+            if (modalSelectedDeptCount) modalSelectedDeptCount.textContent = count;
+
+            if (count > 0) {
+                bulkDeleteDeptBtn.classList.remove('disabled');
+            } else {
+                bulkDeleteDeptBtn.classList.add('disabled');
+            }
+        }
+
+        if (selectAllDepts) {
+            selectAllDepts.addEventListener('change', function() {
+                deptCheckboxes.forEach(cb => cb.checked = selectAllDepts.checked);
+                updateDeptSelection();
+            });
+        }
+
+        deptCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                if (!cb.checked && selectAllDepts) selectAllDepts.checked = false;
+                updateDeptSelection();
+            });
+        });
+    });
+</script>
+{% endblock %}

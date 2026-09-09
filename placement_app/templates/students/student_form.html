@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if student %}Edit Student - {{ student.name }}{% else %}Add New Student{% endif %} - Placement Cell{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'student_list' %}" class="text-decoration-none text-muted fw-semibold">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Student List
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white py-3 border-0">
+        <h5 class="fw-bold mb-0 text-primary">
+            {% if student %}
+                <i class="fa-solid fa-user-pen me-2"></i>Edit Student Record: {{ student.name }} ({{ student.register_number }})
+            {% else %}
+                <i class="fa-solid fa-user-plus me-2"></i>Add Student Record
+            {% endif %}
+        </h5>
+    </div>
+    <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <h6 class="fw-bold text-uppercase text-secondary mb-3" style="font-size: 0.8rem; letter-spacing: 1px;">Basic & Personal Information</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Register Number <span class="text-danger">*</span></label>
+                    <input type="text" name="register_number" class="form-control" value="{{ student.register_number|default:'' }}" placeholder="e.g. 24213946" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Student Name <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control" value="{{ student.name|default:'' }}" placeholder="Full Student Name" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
+                    <select name="department" class="form-select" required>
+                        {% for dept in departments %}
+                            <option value="{{ dept.pk }}" {% if student and student.department.pk == dept.pk %}selected{% endif %}>{{ dept.code }} - {{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Gender</label>
+                    <select name="gender" class="form-select">
+                        <option value="Male" {% if student and student.gender == 'Male' %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if student and student.gender == 'Female' %}selected{% endif %}>Female</option>
+                        <option value="Other" {% if student and student.gender == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Batch / Year</label>
+                    <input type="text" name="batch" class="form-control" value="{{ student.batch|default:'2024-2027' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Pass-out Year</label>
+                    <input type="number" name="passout_year" class="form-control" value="{{ student.passout_year|default:2026 }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Date of Birth</label>
+                    <input type="date" name="dob" class="form-control" value="{{ student.dob|date:'Y-m-d'|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Aadhar Number</label>
+                    <input type="text" name="aadhar_number" class="form-control" value="{{ student.aadhar_number|default:'' }}" placeholder="12-digit Aadhar">
+                </div>
+            </div>
+
+            <h6 class="fw-bold text-uppercase text-secondary mb-3" style="font-size: 0.8rem; letter-spacing: 1px;">Contact Information</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Email Address</label>
+                    <input type="email" name="email" class="form-control" value="{{ student.email|default:'' }}" placeholder="student@example.com">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Student Mobile Number</label>
+                    <input type="text" name="student_mobile" class="form-control" value="{{ student.student_mobile|default:'' }}" placeholder="10-digit mobile">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Parent Mobile Number</label>
+                    <input type="text" name="parent_mobile" class="form-control" value="{{ student.parent_mobile|default:'' }}" placeholder="Parent mobile">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Address</label>
+                    <textarea name="address" class="form-control" rows="2" placeholder="Residential Address">{{ student.address|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <h6 class="fw-bold text-uppercase text-secondary mb-3" style="font-size: 0.8rem; letter-spacing: 1px;">Academic Details & Marks %</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">I Sem %</label>
+                    <input type="number" step="0.01" name="sem1_perc" class="form-control" value="{{ student.sem1_perc|default:0.0 }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">II Sem %</label>
+                    <input type="number" step="0.01" name="sem2_perc" class="form-control" value="{{ student.sem2_perc|default:0.0 }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">III Sem %</label>
+                    <input type="number" step="0.01" name="sem3_perc" class="form-control" value="{{ student.sem3_perc|default:0.0 }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">IV Sem %</label>
+                    <input type="number" step="0.01" name="sem4_perc" class="form-control" value="{{ student.sem4_perc|default:0.0 }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">V Sem %</label>
+                    <input type="number" step="0.01" name="sem5_perc" class="form-control" value="{{ student.sem5_perc|default:0.0 }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">VI Sem %</label>
+                    <input type="number" step="0.01" name="sem6_perc" class="form-control" value="{{ student.sem6_perc|default:0.0 }}">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">X Marks %</label>
+                    <input type="number" step="0.01" name="x_perc" class="form-control" value="{{ student.x_perc|default:0.0 }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">XII Marks %</label>
+                    <input type="number" step="0.01" name="xii_perc" class="form-control" value="{{ student.xii_perc|default:0.0 }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">No. of Arrears</label>
+                    <input type="number" name="no_of_arrears" class="form-control" value="{{ student.no_of_arrears|default:0 }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-center mt-4">
+                    <div class="form-check me-4">
+                        <input class="form-check-input" type="checkbox" name="history_of_arrears" id="history_of_arrears" {% if student and student.history_of_arrears %}checked{% endif %}>
+                        <label class="form-check-label fw-semibold" for="history_of_arrears">History of Arrears</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="iti" id="iti" {% if student and student.iti %}checked{% endif %}>
+                        <label class="form-check-label fw-semibold" for="iti">ITI Completed</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Placement Status</label>
+                    <select name="placement_status" class="form-select">
+                        <option value="UNPLACED" {% if student and student.placement_status == 'UNPLACED' %}selected{% endif %}>Unplaced</option>
+                        <option value="PLACED" {% if student and student.placement_status == 'PLACED' %}selected{% endif %}>Placed</option>
+                        <option value="HIGHER_STUDIES" {% if student and student.placement_status == 'HIGHER_STUDIES' %}selected{% endif %}>Higher Studies</option>
+                        <option value="ENTREPRENEUR" {% if student and student.placement_status == 'ENTREPRENEUR' %}selected{% endif %}>Entrepreneur</option>
+                    </select>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Skills & Technical Proficiencies</label>
+                    <textarea name="skills" class="form-control" rows="2" placeholder="e.g. AutoCAD, CNC Programming, Python, SolidWorks">{{ student.skills|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <h6 class="fw-bold text-uppercase text-secondary mb-3" style="font-size: 0.8rem; letter-spacing: 1px;">Photo & Documents</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Student Photograph</label>
+                    {% if student and student.photo %}
+                        <div class="mb-2">
+                            <img src="{{ student.photo.url }}" class="rounded border" style="width: 50px; height: 60px; object-fit: cover;">
+                            <small class="text-muted ms-2">Current photo uploaded</small>
+                        </div>
+                    {% endif %}
+                    <input type="file" name="photo" class="form-control" accept="image/*">
+                    <small class="text-muted">Accepted formats: JPG, PNG.</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Student Resume PDF</label>
+                    {% if student and student.resume %}
+                        <div class="mb-2">
+                            <a href="{{ student.resume.url }}" target="_blank" class="small fw-bold"><i class="fa-solid fa-file-pdf text-danger me-1"></i> View Current Resume</a>
+                        </div>
+                    {% endif %}
+                    <input type="file" name="resume" class="form-control" accept=".pdf,.doc,.docx">
+                </div>
+            </div>
+
+            <div class="text-end border-top pt-3">
+                <button type="submit" class="btn btn-primary px-4 fw-bold">
+                    <i class="fa-solid fa-save me-1"></i> {% if student %}Update Student Record{% else %}Save Student Record{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

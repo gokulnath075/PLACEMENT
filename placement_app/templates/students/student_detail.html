@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Profile - {{ student.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'student_list' %}" class="text-decoration-none text-muted fw-semibold">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Student Database
+    </a>
+</div>
+
+<!-- Header Card -->
+<div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden">
+    <div class="bg-primary p-4 text-white" style="background: linear-gradient(135deg, #143452 0%, #1F4E79 100%) !important;">
+        <div class="row align-items-center">
+            <div class="col-md-auto text-center mb-3 mb-md-0">
+                {% if student.has_photo %}
+                    <img src="{{ student.photo_url }}" class="rounded-3 border border-3 border-white shadow" style="width: 120px; height: 140px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-white text-primary rounded-3 d-flex align-items-center justify-content-center shadow" style="width: 120px; height: 140px; font-size: 3.5rem;">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md">
+                <div class="badge bg-warning text-dark mb-2 px-3 py-1 fw-bold">{{ student.department.name }} ({{ student.department.code }})</div>
+                <h3 class="fw-bold mb-1">{{ student.name }}</h3>
+                <div class="d-flex flex-wrap gap-3 text-white-50" style="font-size: 0.95rem;">
+                    <span><i class="fa-solid fa-id-card me-1"></i> Register No: <strong>{{ student.register_number }}</strong></span>
+                    <span><i class="fa-solid fa-calendar me-1"></i> Batch: <strong>{{ student.batch }}</strong></span>
+                    <span><i class="fa-solid fa-graduation-cap me-1"></i> Pass-out Year: <strong>{{ student.passout_year }}</strong></span>
+                    {% if student.dob %}
+                        <span><i class="fa-solid fa-cake-candles me-1"></i> DOB: <strong>{{ student.dob|date:"d-m-Y" }}</strong></span>
+                    {% endif %}
+                    {% if student.aadhar_number %}
+                        <span><i class="fa-solid fa-fingerprint me-1"></i> Aadhar: <strong>{{ student.aadhar_number }}</strong></span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-auto text-end">
+                <div class="mb-2">
+                    {% if student.placement_status == 'PLACED' %}
+                        <span class="badge bg-success fs-6 px-3 py-2"><i class="fa-solid fa-circle-check me-1"></i> PLACED</span>
+                    {% else %}
+                        <span class="badge bg-secondary fs-6 px-3 py-2">{{ student.get_placement_status_display }}</span>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{% url 'student_edit' student.pk %}" class="btn btn-warning btn-sm text-dark fw-bold">
+                        <i class="fa-solid fa-pen-to-square me-1"></i> Edit Profile
+                    </a>
+                    <a href="{% url 'student_delete' student.pk %}" onclick="return confirm('Are you sure you want to delete {{ student.name }}?');" class="btn btn-outline-light btn-sm fw-bold">
+                        <i class="fa-solid fa-trash me-1"></i> Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Personal & Contact Details -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-address-card me-2"></i>Personal & Contact Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted d-block fw-semibold">Date of Birth (DOB)</small>
+                    <span class="fw-semibold text-dark"><i class="fa-solid fa-cake-candles me-1 text-muted"></i>{{ student.dob|date:"d-m-Y"|default:"Not Provided" }}</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block fw-semibold">Aadhar Number</small>
+                    <span class="fw-semibold text-dark font-monospace"><i class="fa-solid fa-fingerprint me-1 text-muted"></i>{{ student.aadhar_number|default:"Not Provided" }}</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block fw-semibold">Gender</small>
+                    <span class="fw-semibold text-dark"><i class="fa-solid fa-venus-mars me-1 text-muted"></i>{{ student.gender|default:"Not Provided" }}</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block fw-semibold">Email Address</small>
+                    <span class="fw-semibold text-dark">{{ student.email|default:"Not Provided" }}</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block fw-semibold">Student Mobile</small>
+                    <span class="fw-semibold text-dark"><i class="fa-solid fa-phone me-1 text-muted"></i>{{ student.student_mobile|default:"Not Provided" }}</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block fw-semibold">Parent Mobile</small>
+                    <span class="fw-semibold text-dark"><i class="fa-solid fa-phone-volume me-1 text-muted"></i>{{ student.parent_mobile|default:"Not Provided" }}</span>
+                </div>
+                <div class="mb-0">
+                    <small class="text-muted d-block fw-semibold">Address</small>
+                    <span class="text-dark small">{{ student.address|default:"Not Provided" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Academic Marks Grid -->
+    <div class="col-md-6 col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-graduation-cap me-2"></i>Academic Details & Semester Marks %</h6>
+                <span class="badge bg-primary-subtle text-primary">Avg Sem: {{ student.avg_sem_perc }}%</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-sm-4 col-md-3">
+                        <div class="p-2 border rounded bg-light text-center">
+                            <small class="text-muted d-block">X Marks %</small>
+                            <strong class="text-dark fs-6">{{ student.x_perc }}%</strong>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-4 col-md-3">
+                        <div class="p-2 border rounded bg-light text-center">
+                            <small class="text-muted d-block">XII Marks %</small>
+                            <strong class="text-dark fs-6">{{ student.xii_perc }}%</strong>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-4 col-md-3">
+                        <div class="p-2 border rounded bg-light text-center">
+                            <small class="text-muted d-block">ITI Qualified</small>
+                            <strong class="text-dark fs-6">{% if student.iti %}Yes{% else %}No{% endif %}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-4 col-md-3">
+                        <div class="p-2 border rounded bg-light text-center">
+                            <small class="text-muted d-block">Arrears Count</small>
+                            <strong class="{% if student.no_of_arrears > 0 %}text-danger{% else %}text-success{% endif %} fs-6">{{ student.no_of_arrears }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Semester Marks breakdown table -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm text-center align-middle mb-0">
+                        <thead class="table-light small text-uppercase">
+                            <tr>
+                                <th>Semester I</th>
+                                <th>Semester II</th>
+                                <th>Semester III</th>
+                                <th>Semester IV</th>
+                                <th>Semester V</th>
+                                <th>Semester VI</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold">{{ student.sem1_perc }}%</td>
+                                <td class="fw-bold">{{ student.sem2_perc }}%</td>
+                                <td class="fw-bold">{{ student.sem3_perc }}%</td>
+                                <td class="fw-bold">{{ student.sem4_perc }}%</td>
+                                <td class="fw-bold">{{ student.sem5_perc }}%</td>
+                                <td class="fw-bold">{{ student.sem6_perc }}%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if student.skills %}
+                <div class="mt-3">
+                    <small class="text-muted d-block fw-semibold mb-1">Skills & Technical Proficiencies</small>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for skill in student.skills.splitlines %}
+                            <span class="badge bg-secondary-subtle text-dark border">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Complete Placement History Table -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-white py-3 border-0">
+        <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-history me-2"></i>Complete Placement & Interview History</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Company Name</th>
+                        <th>Drive Date</th>
+                        <th>Job Role</th>
+                        <th class="text-center">Interview Attended</th>
+                        <th class="text-center">Final Result</th>
+                        <th class="pe-4 text-end">Offered Salary</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in interview_records %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">{{ rec.company.name }}</td>
+                        <td>{{ rec.drive.drive_date|date:"d-m-Y" }}</td>
+                        <td>{{ rec.job_role|default:rec.company.job_role }}</td>
+                        <td class="text-center">
+                            {% if rec.interview_attended %}
+                                <span class="badge bg-success-subtle text-success border border-success"><i class="fa-solid fa-check me-1"></i> Yes</span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary border">No</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if rec.final_result == 'SELECTED' or rec.final_result == 'JOINED' %}
+                                <span class="badge bg-success fs-6 px-3 py-1"><i class="fa-solid fa-trophy me-1"></i> Selected</span>
+                            {% elif rec.final_result == 'REJECTED' %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger">Rejected</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning border border-warning">{{ rec.get_final_result_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4 text-end fw-bold text-success">{{ rec.salary|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No placement drive interview records found for this student.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

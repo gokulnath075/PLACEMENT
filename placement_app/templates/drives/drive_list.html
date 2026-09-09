@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Placement Drives - Placement Cell{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">PLACEMENT DRIVES MODULE</h4>
+        <p class="text-muted mb-0">Create and manage company campus recruitment drives and interview rounds.</p>
+    </div>
+    <a href="{% url 'drive_create' %}" class="btn btn-primary shadow-sm fw-bold">
+        <i class="fa-solid fa-plus me-2"></i> Create Placement Drive
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Company Name</th>
+                        <th>Drive Title</th>
+                        <th>Salary / CTC</th>
+                        <th>Job Role</th>
+                        <th>Eligible Depts</th>
+                        <th>Drive Date</th>
+                        <th class="text-center">Status</th>
+                        <th class="pe-4 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drive in drives %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark fs-6">
+                            <i class="fa-solid fa-building me-2 text-primary"></i>{{ drive.company.name }}
+                        </td>
+                        <td class="fw-semibold">{{ drive.title }}</td>
+                        <td class="fw-bold text-success">{{ drive.salary_ctc }}</td>
+                        <td>{{ drive.job_role }}</td>
+                        <td>
+                            {% for d in drive.eligible_departments.all %}
+                                <span class="badge bg-primary-subtle text-primary border" style="font-size: 0.75rem;">{{ d.code }}</span>
+                            {% endfor %}
+                        </td>
+                        <td>{{ drive.drive_date|date:"d-m-Y" }}</td>
+                        <td class="text-center">
+                            {% if drive.status == 'ONGOING' %}
+                                <span class="badge bg-success-subtle text-success border border-success">Ongoing</span>
+                            {% elif drive.status == 'UPCOMING' %}
+                                <span class="badge bg-primary-subtle text-primary border border-primary">Upcoming</span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary">Completed</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4 text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'drive_detail' drive.pk %}" class="btn btn-primary fw-semibold" title="Track Round-by-Round Interviews">
+                                    <i class="fa-solid fa-clipboard-check me-1"></i> Track
+                                </a>
+                                {% if drive.status == 'COMPLETED' %}
+                                    <a href="{% url 'drive_complete' drive.pk %}?next=list" class="btn btn-outline-secondary fw-semibold" title="Reopen Drive Status">
+                                        <i class="fa-solid fa-rotate-left me-1"></i> Reopen
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'drive_complete' drive.pk %}?next=list" class="btn btn-success fw-semibold text-white" title="Mark Drive as Completed">
+                                        <i class="fa-solid fa-circle-check me-1"></i> Complete
+                                    </a>
+                                {% endif %}
+                                <a href="{% url 'drive_edit' drive.pk %}" class="btn btn-outline-warning text-dark fw-semibold" title="Edit Drive Details">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                                </a>
+                                <a href="{% url 'drive_delete' drive.pk %}" onclick="return confirm('Are you sure you want to delete drive {{ drive.title }}?');" class="btn btn-outline-danger fw-semibold" title="Delete Drive">
+                                    <i class="fa-solid fa-trash me-1"></i> Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-briefcase fs-2 d-block mb-2"></i>
+                            No placement drives created yet. Click "Create Placement Drive" to create one.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

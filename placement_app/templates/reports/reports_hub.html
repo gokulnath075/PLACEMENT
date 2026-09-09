@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics & Reports - Placement Cell{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">PLACEMENT REPORTS & ANALYTICS</h4>
+        <p class="text-muted mb-0">Generate, view, and export company-wise, department-wise, and student placement reports.</p>
+    </div>
+    <div class="no-print">
+        <button onclick="window.print()" class="btn btn-outline-dark fw-bold"><i class="fa-solid fa-print me-2"></i> Print View</button>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="card border-0 shadow-sm rounded-3 mb-4 no-print">
+    <div class="card-body p-2">
+        <ul class="nav nav-pills nav-fill">
+            <li class="nav-item">
+                <a class="nav-link fw-bold {% if report_type == 'dept_wise' %}active{% endif %}" href="?type=dept_wise">
+                    <i class="fa-solid fa-sitemap me-2"></i> Department-wise Report
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link fw-bold {% if report_type == 'company_wise' %}active{% endif %}" href="?type=company_wise">
+                    <i class="fa-solid fa-building me-2"></i> Company Recruitment Summary
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link fw-bold {% if report_type == 'unplaced' %}active{% endif %}" href="?type=unplaced">
+                    <i class="fa-solid fa-user-clock me-2"></i> Students Awaiting Placement
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+{% if report_type == 'dept_wise' %}
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white py-3 border-0">
+        <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-table me-2"></i>Department-wise Placement Summary</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-center">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="text-start ps-4">Department</th>
+                        <th>Total Students</th>
+                        <th>Students Placed</th>
+                        <th>Awaiting Placement</th>
+                        <th>Placement %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in data.dept_stats %}
+                    <tr>
+                        <td class="text-start ps-4 fw-bold">
+                            <span class="badge bg-primary me-2">{{ item.department.code }}</span>
+                            {{ item.department.name }}
+                        </td>
+                        <td class="fw-semibold">{{ item.total }}</td>
+                        <td class="fw-bold text-success">{{ item.placed }}</td>
+                        <td class="fw-semibold text-secondary">{{ item.unplaced }}</td>
+                        <td class="fw-bold fs-6">
+                            {% if item.pct >= 50 %}
+                                <span class="badge bg-success-subtle text-success border border-success">{{ item.pct }}%</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning border border-warning">{{ item.pct }}%</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% elif report_type == 'company_wise' %}
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white py-3 border-0">
+        <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-building me-2"></i>Company Recruitment & Interview Summary</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-center">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="text-start ps-4">Company Name</th>
+                        <th>Salary Offered</th>
+                        <th>Registered</th>
+                        <th>Attended</th>
+                        <th>Selected Candidates</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in data.company_stats %}
+                    <tr>
+                        <td class="text-start ps-4 fw-bold text-dark">{{ item.company.name }}</td>
+                        <td class="fw-bold text-success">{{ item.company.salary_ctc }}</td>
+                        <td class="fw-semibold">{{ item.registered }}</td>
+                        <td class="fw-semibold text-primary">{{ item.attended }}</td>
+                        <td><span class="badge bg-success fs-6 px-3 py-1">{{ item.selected }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% elif report_type == 'unplaced' %}
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-users me-2"></i>Students Awaiting Placement (Total: {{ data.unplaced_students.count }})</h6>
+        <a href="{% url 'student_list' %}?status=UNPLACED&export=excel" class="btn btn-sm btn-success no-print fw-bold">
+            <i class="fa-solid fa-download me-1"></i> Export Unplaced List to Excel
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Reg Number</th>
+                        <th>Student Name</th>
+                        <th>Department</th>
+                        <th>Batch</th>
+                        <th class="text-center">Avg Sem %</th>
+                        <th class="text-center">Arrears</th>
+                        <th>Mobile</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in data.unplaced_students %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-primary">{{ student.register_number }}</td>
+                        <td class="fw-semibold text-dark">{{ student.name }}</td>
+                        <td><span class="badge bg-primary-subtle text-primary border">{{ student.department.code }}</span></td>
+                        <td>{{ student.batch }}</td>
+                        <td class="text-center fw-bold">{{ student.avg_sem_perc }}%</td>
+                        <td class="text-center">
+                            {% if student.no_of_arrears == 0 %}
+                                <span class="badge bg-success-subtle text-success">0</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger">{{ student.no_of_arrears }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ student.student_mobile|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">All students have been placed!</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

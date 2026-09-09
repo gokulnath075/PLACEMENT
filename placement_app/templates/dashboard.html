@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Training & Placement Cell{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">PLACEMENT DASHBOARD</h4>
+        <p class="text-muted mb-0">Overview of student placements, companies visited, and department statistics.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <!-- Selection Report Button -->
+        <a href="{% url 'selection_report' %}" class="btn btn-warning shadow-sm text-dark fw-bold">
+            <i class="fa-solid fa-file-pdf me-1"></i> Selection Report
+        </a>
+        
+        <a href="{% url 'drive_create' %}" class="btn btn-primary shadow-sm fw-bold">
+            <i class="fa-solid fa-plus me-1"></i> New Drive
+        </a>
+    </div>
+</div>
+
+<!-- Modal: Add Department from Dashboard -->
+<div class="modal fade" id="addDeptDashboardModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'department_list' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="dashboard">
+                <div class="modal-header bg-primary text-white">
+                    <h6 class="modal-title fw-bold"><i class="fa-solid fa-folder-plus me-2"></i>Add Academic Department</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Department Code <span class="text-danger">*</span></label>
+                        <input type="text" name="code" class="form-control text-uppercase" placeholder="e.g. DME, EEE, ECE, CSE, CIVIL" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Full Department Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Diploma in Mechanical Engineering">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold">Add Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Remove Department from Dashboard -->
+<div class="modal fade" id="removeDeptDashboardModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h6 class="modal-title fw-bold"><i class="fa-solid fa-folder-minus me-2"></i>Remove Department</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-start">
+                <p class="small text-muted mb-3">Select an empty department to remove from the system:</p>
+                <div class="list-group">
+                    {% for dept in dept_stats %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-primary me-2">{{ dept.code }}</span>
+                                <strong class="text-dark">{{ dept.name }}</strong>
+                            </div>
+                            {% if dept.total > 0 %}
+                                <span class="badge bg-secondary" title="Has enrolled students">{{ dept.total }} Students</span>
+                            {% else %}
+                                <a href="{% url 'department_delete' dept.pk %}?next=dashboard" onclick="return confirm('Remove department {{ dept.code }}?');" class="btn btn-sm btn-danger fw-bold">
+                                    <i class="fa-solid fa-trash me-1"></i> Remove
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <div class="text-muted p-2">No departments available.</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between align-items-center">
+                <form method="post" action="{% url 'department_bulk_delete' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="clean_unused" value="true">
+                    <input type="hidden" name="next" value="dashboard">
+                    <button type="submit" onclick="return confirm('Remove all departments with 0 students in the Student Database?');" class="btn btn-outline-danger btn-sm fw-bold">
+                        <i class="fa-solid fa-broom me-1"></i> Remove All Unused (0 Students)
+                    </button>
+                </form>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Cards Grid -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-lg-2">
+        <div class="card card-kpi p-3 bg-white border-start border-primary border-4 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-uppercase text-muted fw-bold d-block text-truncate mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total Students</small>
+                    <h3 class="fw-bold text-primary mb-0" style="font-size: 1.4rem;">{{ total_students|default:"1,250" }}</h3>
+                </div>
+                <div class="kpi-icon bg-primary-subtle text-primary">
+                    <i class="fa-solid fa-user-graduate"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+        <div class="card card-kpi p-3 bg-white border-start border-info border-4 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-uppercase text-muted fw-bold d-block text-truncate mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Companies Visited</small>
+                    <h3 class="fw-bold text-info mb-0" style="font-size: 1.4rem;">{{ companies_visited|default:"48" }}</h3>
+                </div>
+                <div class="kpi-icon bg-info-subtle text-info">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+        <div class="card card-kpi p-3 bg-white border-start border-success border-4 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-uppercase text-muted fw-bold d-block text-truncate mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Students Placed</small>
+                    <h3 class="fw-bold text-success mb-0" style="font-size: 1.4rem;">{{ placed_students|default:"625" }}</h3>
+                </div>
+                <div class="kpi-icon bg-success-subtle text-success">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+        <div class="card card-kpi p-3 bg-white border-start border-warning border-4 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-uppercase text-muted fw-bold d-block text-truncate mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Placement %</small>
+                    <h3 class="fw-bold text-warning mb-0" style="font-size: 1.4rem;">{{ placement_percentage }}%</h3>
+                </div>
+                <div class="kpi-icon bg-warning-subtle text-warning">
+                    <i class="fa-solid fa-percent"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+        <div class="card card-kpi p-3 bg-white border-start border-danger border-4 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-uppercase text-muted fw-bold d-block text-truncate mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Highest Package</small>
+                    <h3 class="fw-bold text-danger mb-0" style="font-size: 1.25rem;">{{ highest_package|default:"₹8.50 LPA" }}</h3>
+                </div>
+                <div class="kpi-icon bg-danger-subtle text-danger">
+                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+        <div class="card card-kpi p-3 bg-white border-start border-secondary border-4 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-uppercase text-muted fw-bold d-block text-truncate mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Awaiting Placement</small>
+                    <h3 class="fw-bold text-secondary mb-0" style="font-size: 1.4rem;">{{ awaiting_placement|default:"625" }}</h3>
+                </div>
+                <div class="kpi-icon bg-secondary-subtle text-secondary">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department-Wise & Chart Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-sitemap me-2"></i>Department-wise Placement Breakdown</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-4">Department Code & Name</th>
+                                <th class="text-center">Students</th>
+                                <th class="text-center">Placed</th>
+                                <th class="text-center">Placement %</th>
+                                <th class="text-center">Progress</th>
+                                <th class="pe-4 text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dept in dept_stats %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary px-2 py-1" style="min-width: 48px; text-align: center; font-size: 0.75rem;">{{ dept.code }}</span>
+                                        <span class="fw-bold text-dark" style="font-size: 0.88rem;">{{ dept.name }}</span>
+                                    </div>
+                                </td>
+                                <td class="text-center fw-semibold">{{ dept.total }}</td>
+                                <td class="text-center text-success fw-bold">{{ dept.placed }}</td>
+                                <td class="text-center fw-bold">{{ dept.pct }}%</td>
+                                <td style="min-width: 100px;">
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar {% if dept.pct >= 60 %}bg-success{% elif dept.pct >= 40 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ dept.pct }}%;"></div>
+                                    </div>
+                                </td>
+                                <td class="pe-4 text-end">
+                                    <span class="badge bg-light text-muted border">Active</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">No department statistics available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-chart-column me-2"></i>Placement % Comparison</h6>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center p-3">
+                <canvas id="deptPlacementChart" style="max-height: 280px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Drives Table -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-briefcase me-2"></i>Active & Recent Placement Drives</h6>
+        <a href="{% url 'drive_list' %}" class="btn btn-sm btn-outline-primary rounded-pill">View All Drives</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Company</th>
+                        <th>Job Role</th>
+                        <th>Salary / CTC</th>
+                        <th>Drive Date</th>
+                        <th class="text-center">Status</th>
+                        <th class="pe-4 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drive in recent_drives %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">
+                            <i class="fa-solid fa-building me-2 text-muted"></i>{{ drive.company.name }}
+                        </td>
+                        <td>{{ drive.job_role }}</td>
+                        <td class="fw-bold text-success">{{ drive.salary_ctc }}</td>
+                        <td>{{ drive.drive_date|date:"d-m-Y" }}</td>
+                        <td class="text-center">
+                            {% if drive.status == 'ONGOING' %}
+                                <span class="badge bg-success-subtle text-success border border-success">Ongoing</span>
+                            {% elif drive.status == 'UPCOMING' %}
+                                <span class="badge bg-primary-subtle text-primary border border-primary">Upcoming</span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary">Completed</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4 text-end">
+                            <a href="{% url 'drive_detail' drive.pk %}" class="btn btn-sm btn-primary">
+                                <i class="fa-solid fa-users-gear me-1"></i> Track & Selection
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No placement drives found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('deptPlacementChart').getContext('2d');
+        
+        const labels = [{% for d in dept_stats %}'{{ d.code }}',{% endfor %}];
+        const dataPct = [{% for d in dept_stats %}{{ d.pct }},{% endfor %}];
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Placement %',
+                    data: dataPct,
+                    backgroundColor: 'rgba(31, 78, 121, 0.85)',
+                    borderColor: '#1F4E79',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) { return value + "%"; }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
