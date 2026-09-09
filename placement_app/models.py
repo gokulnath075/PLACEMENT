@@ -117,6 +117,14 @@ class Student(models.Model):
             except Exception:
                 pass
 
+        # Check external Google Drive folder if configured in settings
+        gdrive_dir = getattr(settings, 'GOOGLE_DRIVE_PHOTOS_DIR', None)
+        if gdrive_dir and os.path.exists(gdrive_dir):
+            for ext in ['png', 'jpg', 'jpeg', 'webp', 'PNG', 'JPG', 'JPEG']:
+                full_path = os.path.join(gdrive_dir, f"{self.register_number}.{ext}")
+                if os.path.exists(full_path):
+                    return full_path
+
         photos_dir = os.path.join(settings.MEDIA_ROOT, 'student_photos')
         if os.path.exists(photos_dir):
             for ext in ['png', 'jpg', 'jpeg', 'webp', 'PNG', 'JPG', 'JPEG']:
@@ -138,8 +146,11 @@ class Student(models.Model):
     @property
     def photo_url(self):
         path = self.get_photo_path()
-        if path and self.photo:
-            return self.photo.url
+        if path:
+            if self.photo and hasattr(self.photo, 'url') and self.photo.name:
+                return self.photo.url
+            rel_name = os.path.basename(path)
+            return f"{settings.MEDIA_URL}student_photos/{rel_name}"
         return '/static/images/default_avatar.png'
 
 class Company(models.Model):
