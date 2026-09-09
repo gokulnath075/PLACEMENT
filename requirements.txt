@@ -1,0 +1,7 @@
+Django>=4.2,<6.2
+pillow
+pandas
+openpyxl
+reportlab
+gunicorn
+whitenoise
